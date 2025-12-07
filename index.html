@@ -3,120 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎯 Military Attack - Адаптивная версия</title>
+    <title>🎯 Military Attack - Глобальная война</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
-    <style>
-        /* Мобильные стили */
-        @media (max-width: 768px) {
-            .weapons-panel {
-                position: fixed;
-                bottom: 10px;
-                left: 10px;
-                right: 10px;
-                height: 60px;
-                background: rgba(20, 30, 60, 0.95);
-                border-radius: 15px;
-                border: 2px solid #ffaa00;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 15px;
-                z-index: 1001;
-            }
-            
-            .hamburger-menu {
-                display: block;
-                font-size: 30px;
-                cursor: pointer;
-                color: #ffaa00;
-            }
-            
-            .mobile-weapons {
-                display: none;
-                position: fixed;
-                bottom: 80px;
-                left: 10px;
-                right: 10px;
-                background: rgba(20, 30, 60, 0.98);
-                border: 2px solid #ffaa00;
-                border-radius: 15px;
-                padding: 20px;
-                z-index: 1002;
-                backdrop-filter: blur(20px);
-            }
-            
-            .mobile-weapons.active {
-                display: block;
-            }
-            
-            .weapons-grid-mobile {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            
-            .weapon-btn-mobile {
-                padding: 12px;
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid #555;
-                border-radius: 10px;
-                text-align: center;
-                color: white;
-                cursor: pointer;
-            }
-            
-            .attack-btn-mobile {
-                width: 100%;
-                padding: 15px;
-                background: linear-gradient(145deg, #ff3333, #ff6666);
-                color: white;
-                border: none;
-                border-radius: 10px;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-                margin-top: 15px;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- ЭКРАН ВЫБОРА СТРАНЫ -->
     <div id="countrySelectScreen" class="screen active">
         <div class="select-container">
             <h1>🎯 ВЫБЕРИ СТРАНУ</h1>
-            <p>Кликни на флаг и начни войну!</p>
+            <p>Выбери флаг и начни глобальную войну!</p>
             
             <div class="countries-grid">
-                <div class="country-card" data-country="RU" onclick="selectCountry('RU')">
+                <div class="country-card" data-country="RU">
                     <div class="flag">🇷🇺</div>
                     <div class="name">РОССИЯ</div>
                 </div>
-                <div class="country-card" data-country="US" onclick="selectCountry('US')">
+                <div class="country-card" data-country="US">
                     <div class="flag">🇺🇸</div>
                     <div class="name">США</div>
                 </div>
-                <div class="country-card" data-country="CN" onclick="selectCountry('CN')">
+                <div class="country-card" data-country="CN">
                     <div class="flag">🇨🇳</div>
                     <div class="name">КИТАЙ</div>
                 </div>
-                <div class="country-card" data-country="KZ" onclick="selectCountry('KZ')">
+                <div class="country-card" data-country="KZ">
                     <div class="flag">🇰🇿</div>
                     <div class="name">КАЗАХСТАН</div>
                 </div>
-                <div class="country-card" data-country="DE" onclick="selectCountry('DE')">
+                <div class="country-card" data-country="DE">
                     <div class="flag">🇩🇪</div>
                     <div class="name">ГЕРМАНИЯ</div>
                 </div>
-                <div class="country-card" data-country="JP" onclick="selectCountry('JP')">
+                <div class="country-card" data-country="JP">
                     <div class="flag">🇯🇵</div>
                     <div class="name">ЯПОНИЯ</div>
+                </div>
+                <div class="country-card" data-country="IN">
+                    <div class="flag">🇮🇳</div>
+                    <div class="name">ИНДИЯ</div>
+                </div>
+                <div class="country-card" data-country="BR">
+                    <div class="flag">🇧🇷</div>
+                    <div class="name">БРАЗИЛИЯ</div>
                 </div>
             </div>
             
             <button class="start-btn" onclick="startGame()">
-                🚀 НАЧАТЬ
+                🚀 НАЧАТЬ ВОЙНУ
             </button>
         </div>
     </div>
@@ -125,7 +59,7 @@
     <div id="gameScreen" class="screen">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ (ПК И МОБИЛЬНЫЕ) -->
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
         <div class="top-bar">
             <div class="player-info">
                 <span id="playerFlag">🇷🇺</span>
@@ -134,67 +68,98 @@
             
             <div class="money-info">
                 <span>💰 БАЛАНС:</span>
-                <span>∞</span>
+                <span id="moneyAmount">1,000,000</span>
             </div>
             
             <div class="target-info">
                 <span>🎯 ЦЕЛЬ:</span>
                 <span id="targetName">Кликни на карту</span>
             </div>
+            
+            <div class="coordinates-info">
+                <span>📍 КООРДИНАТЫ:</span>
+                <span id="targetCoords">0°, 0°</span>
+            </div>
         </div>
         
-        <!-- ЛЕВАЯ ПАНЕЛЬ - ТОЛЬКО ДЛЯ ПК -->
+        <!-- ЛЕВАЯ ПАНЕЛЬ - ПК -->
         <div class="left-panel pc-only">
             <h3>💣 ОРУЖИЕ</h3>
             <div class="weapons-pc">
                 <button class="weapon-btn-pc active" data-weapon="tank">
                     <span class="icon">🚜</span>
                     <span>ТАНКИ</span>
+                    <span class="cost">$10K</span>
                 </button>
                 <button class="weapon-btn-pc" data-weapon="artillery">
                     <span class="icon">💣</span>
                     <span>АРТИЛЛЕРИЯ</span>
+                    <span class="cost">$50K</span>
                 </button>
                 <button class="weapon-btn-pc" data-weapon="plane">
                     <span class="icon">✈️</span>
                     <span>САМОЛЕТЫ</span>
+                    <span class="cost">$100K</span>
                 </button>
                 <button class="weapon-btn-pc" data-weapon="missile">
                     <span class="icon">🚀</span>
                     <span>РАКЕТЫ</span>
+                    <span class="cost">$250K</span>
                 </button>
                 <button class="weapon-btn-pc" data-weapon="nuke">
                     <span class="icon">☢️</span>
                     <span>ЯДЕРНАЯ</span>
+                    <span class="cost">$500K</span>
                 </button>
                 <button class="weapon-btn-pc tsar" data-weapon="tsar">
                     <span class="icon">👑</span>
                     <span>ЦАРЬ-БОМБА</span>
+                    <span class="cost">$1M</span>
                 </button>
             </div>
             
             <div class="attack-info">
                 <div>Выбрано: <span id="selectedWeaponName">ТАНКИ</span></div>
                 <div>Урон: <span id="selectedWeaponDamage">20%</span></div>
+                <div>Стоимость: <span id="selectedWeaponCost">$10,000</span></div>
             </div>
             
             <button class="attack-btn-pc" onclick="launchAttack()">
                 🚀 АТАКОВАТЬ
             </button>
             
+            <div class="control-buttons">
+                <button class="control-btn" onclick="toggleRadar()">
+                    📡 Радар
+                </button>
+                <button class="control-btn" onclick="addPVOSystem()">
+                    🛡️ ПВО
+                </button>
+                <button class="control-btn" onclick="openQuantityPanel()">
+                    🔢 Кол-во
+                </button>
+                <button class="control-btn" onclick="autoPlaceDefenses()">
+                    🤖 Авто
+                </button>
+                <button class="control-btn" onclick="clearDefenses()">
+                    🗑️ Очистить
+                </button>
+            </div>
+            
             <button class="back-btn" onclick="goBackToCountrySelect()">
                 ↩️ СМЕНИТЬ СТРАНУ
             </button>
         </div>
         
-        <!-- МОБИЛЬНОЕ МЕНЮ ОРУЖИЯ -->
+        <!-- МОБИЛЬНОЕ МЕНЮ -->
         <div class="weapons-panel mobile-only">
             <div class="hamburger-menu" onclick="toggleMobileMenu()">
                 ☰
             </div>
             
             <div class="current-weapon-mobile">
-                <span id="mobileWeaponName">ТАНКИ</span>
+                <div id="mobileWeaponName">ТАНКИ</div>
+                <div id="mobileWeaponCost" class="cost-mobile">$10K</div>
             </div>
             
             <button class="attack-btn-mobile-small" onclick="launchAttack()">
@@ -202,32 +167,56 @@
             </button>
         </div>
         
-        <!-- ВЫПАДАЮЩЕЕ МЕНЮ ОРУЖИЯ (МОБИЛЬНОЕ) -->
+        <!-- ВЫПАДАЮЩЕЕ МЕНЮ (МОБИЛЬНОЕ) -->
         <div class="mobile-weapons" id="mobileWeapons">
             <div class="weapons-grid-mobile">
                 <button class="weapon-btn-mobile" onclick="selectWeaponMobile('tank')">
                     <span class="icon">🚜</span>
                     <div>ТАНКИ</div>
+                    <div class="cost-mobile">$10K</div>
                 </button>
                 <button class="weapon-btn-mobile" onclick="selectWeaponMobile('artillery')">
                     <span class="icon">💣</span>
                     <div>АРТИЛЛЕРИЯ</div>
+                    <div class="cost-mobile">$50K</div>
                 </button>
                 <button class="weapon-btn-mobile" onclick="selectWeaponMobile('plane')">
                     <span class="icon">✈️</span>
                     <div>САМОЛЕТЫ</div>
+                    <div class="cost-mobile">$100K</div>
                 </button>
                 <button class="weapon-btn-mobile" onclick="selectWeaponMobile('missile')">
                     <span class="icon">🚀</span>
                     <div>РАКЕТЫ</div>
+                    <div class="cost-mobile">$250K</div>
                 </button>
                 <button class="weapon-btn-mobile" onclick="selectWeaponMobile('nuke')">
                     <span class="icon">☢️</span>
                     <div>ЯДЕРНАЯ</div>
+                    <div class="cost-mobile">$500K</div>
                 </button>
                 <button class="weapon-btn-mobile tsar" onclick="selectWeaponMobile('tsar')">
                     <span class="icon">👑</span>
                     <div>ЦАРЬ-БОМБА</div>
+                    <div class="cost-mobile">$1M</div>
+                </button>
+            </div>
+            
+            <div class="control-buttons-mobile">
+                <button class="control-btn-mobile" onclick="toggleRadar()">
+                    📡
+                </button>
+                <button class="control-btn-mobile" onclick="addPVOSystem()">
+                    🛡️
+                </button>
+                <button class="control-btn-mobile" onclick="openQuantityPanel()">
+                    🔢
+                </button>
+                <button class="control-btn-mobile" onclick="autoPlaceDefenses()">
+                    🤖
+                </button>
+                <button class="control-btn-mobile" onclick="clearDefenses()">
+                    🗑️
                 </button>
             </div>
             
@@ -236,7 +225,7 @@
             </button>
         </div>
         
-        <!-- ПРАВАЯ ПАНЕЛЬ - ТОЛЬКО ДЛЯ ПК -->
+        <!-- ПРАВАЯ ПАНЕЛЬ - ПК -->
         <div class="right-panel pc-only">
             <h3>📊 СТАТИСТИКА</h3>
             <div class="stats-grid">
@@ -256,30 +245,59 @@
                     <span>Уничтожено:</span>
                     <span id="statDestroyed">0</span>
                 </div>
+                <div class="stat">
+                    <span>Потрачено:</span>
+                    <span id="statSpent">$0</span>
+                </div>
+                <div class="stat">
+                    <span>Перехватов:</span>
+                    <span id="statIntercepts">0</span>
+                </div>
+            </div>
+            
+            <div class="enemies-list">
+                <h4>🌍 ВРАЖДЕБНЫЕ СТРАНЫ</h4>
+                <div id="enemiesContainer">
+                    <!-- Здесь будут отображаться вражеские страны -->
+                </div>
             </div>
             
             <div class="coordinates">
-                <div>Координаты цели:</div>
-                <div id="targetCoords">0°, 0°</div>
+                <div>🎯 Текущая цель:</div>
+                <div id="targetCountry">Не выбрана</div>
             </div>
         </div>
         
-        <!-- ЛОГ СОБЫТИЙ (МОБИЛЬНЫЙ В ВЕРХУ) -->
-        <div class="log-panel-mobile mobile-only">
-            <div id="eventLogMobile">
-                <div>Выбери цель на карте</div>
+        <!-- ПАНЕЛЬ КОЛИЧЕСТВА -->
+        <div class="quantity-panel" id="quantityPanel">
+            <h3>🔢 ВВЕДИТЕ КОЛИЧЕСТВО</h3>
+            <input type="number" id="quantityInput" class="quantity-input" min="1" max="100" value="1">
+            <div class="quantity-buttons">
+                <button class="quantity-btn" onclick="setQuantity(1)">1</button>
+                <button class="quantity-btn" onclick="setQuantity(5)">5</button>
+                <button class="quantity-btn" onclick="setQuantity(10)">10</button>
+                <button class="quantity-btn" onclick="setQuantity(25)">25</button>
+                <button class="quantity-btn launch" onclick="launchMultipleAttacks()">🚀 ЗАПУСТИТЬ</button>
             </div>
+            <button class="quantity-btn cancel" onclick="closeQuantityPanel()" style="margin-top: 10px; background: #555;">❌ Отмена</button>
         </div>
         
-        <!-- ЛОГ СОБЫТИЙ (ПК ВНИЗУ) -->
+        <!-- ЛОГ СОБЫТИЙ (ПК) -->
         <div class="log-panel pc-only">
             <h3>📡 ЛОГ АТАК</h3>
             <div id="eventLog">
-                <div>Добро пожаловать! Кликни на карту для выбора цели</div>
+                <div class="log-entry">Добро пожаловать! Кликни на карту для выбора цели</div>
+            </div>
+        </div>
+        
+        <!-- ЛОГ СОБЫТИЙ (МОБИЛЬНЫЙ) -->
+        <div class="log-panel-mobile mobile-only">
+            <div id="eventLogMobile">
+                <div>Выбери цель на карте</div>
             </div>
         </div>
     </div>
     
     <script src="game.js"></script>
 </body>
-                </html>
+</html>
