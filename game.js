@@ -714,3 +714,82 @@ function drawAttacks() {
     }
 }
         
+
+  // ========== ВЗРЫВЫ ==========
+
+function updateExplosions() {
+    const now = Date.now();
+    
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        const explosion = explosions[i];
+        const elapsed = (now - explosion.startTime) / 1000;
+        const progress = elapsed / explosion.duration;
+        
+        if (progress >= 1) {
+            explosions.splice(i, 1);
+            continue;
+        }
+        
+        explosion.radius = explosion.maxRadius * progress;
+        explosion.opacity = 1 - progress;
+    }
+}
+
+function drawExplosions() {
+    for (const explosion of explosions) {
+        // Основной взрыв
+        const gradient = ctx.createRadialGradient(
+            explosion.x, explosion.y, 0,
+            explosion.x, explosion.y, explosion.radius
+        );
+        
+        if (explosion.shockwave) {
+            // Ядерный взрыв
+            gradient.addColorStop(0, 'rgba(255, 255, 0, ' + explosion.opacity * 0.8 + ')');
+            gradient.addColorStop(0.5, 'rgba(255, 100, 0, ' + explosion.opacity * 0.6 + ')');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, ' + explosion.opacity * 0.2 + ')');
+        } else {
+            // Обычный взрыв
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.8 + ')');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, ' + explosion.opacity * 0.2 + ')');
+        }
+        
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Ударная волна (для ядерного взрыва)
+        if (explosion.shockwave) {
+            const shockwaveRadius = explosion.radius * 1.5;
+            const shockwaveOpacity = explosion.opacity * 0.5;
+            
+            ctx.beginPath();
+            ctx.arc(explosion.x, explosion.y, shockwaveRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + shockwaveOpacity + ')';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        // Вспышка в центре
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + explosion.opacity + ')';
+        ctx.fill();
+    }
+}
+
+// ========== ЗАПУСК ИГРЫ ==========
+
+// Запускаем игру когда страница загружена
+window.addEventListener('load', init);
+
+// Останавливаем анимацию при закрытии
+window.addEventListener('beforeunload', () => {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+    }
+});
+
+console.log('🚀 Military Map загружен! Выбирай страну и цель!');
+                    
