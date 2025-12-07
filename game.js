@@ -631,4 +631,86 @@ function drawCountries() {
 
 // ========== АТАКИ И РАКЕТЫ ==========
 
+     function updateAttacks() {
+      for (let i = attacks.length - 1; i >= 0; i--) {
+        const attack = attacks[i];
+        
+        // Увеличиваем прогресс
+        attack.progress += attack.speed;
+        
+        // Если ракета достигла цели
+        if (attack.progress >= 1) {
+            attack.completed = true;
+            
+            // Создаем взрыв
+            const explosion = {
+                x: attack.targetX,
+                y: attack.targetY,
+                radius: 0,
+                maxRadius: attack.explosionRadius,
+                color: attack.color,
+                opacity: 1,
+                duration: attack.weapon === 'tsar' ? 5 : 2,
+                startTime: Date.now(),
+                shockwave: attack.weapon === 'tsar'
+            };
+            
+            explosions.push(explosion);
+            
+            // Обновляем статистику
+            stats.hits++;
+            updateStats();
+            
+            // Удаляем завершенную атаку
+            attacks.splice(i, 1);
+            
+            // Добавляем в лог
+            addToLog(`💥 ${WEAPONS[attack.weapon].name} попала в ${attack.targetName}!`);
+        }
+    }
+}
+
+function drawAttacks() {
+    for (const attack of attacks) {
+        // Вычисляем текущую позицию ракеты
+        const currentX = attack.startX + (attack.targetX - attack.startX) * attack.progress;
+        const currentY = attack.startY + (attack.targetY - attack.startY) * attack.progress;
+        
+        // Рисуем линию траектории (след ракеты)
+        ctx.beginPath();
+        ctx.moveTo(attack.startX, attack.startY);
+        ctx.lineTo(currentX, currentY);
+        ctx.strokeStyle = attack.trailColor + '80'; // 50% прозрачность
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Рисуем саму ракету
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = attack.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Эффект огня сзади ракеты
+        if (attack.progress > 0.1) {
+            const tailLength = 20;
+            const tailX = currentX - (attack.targetX - attack.startX) * 0.05;
+            const tailY = currentY - (attack.targetY - attack.startY) * 0.05;
+            
+            const gradient = ctx.createRadialGradient(
+                tailX, tailY, 0,
+                tailX, tailY, 10
+            );
+            gradient.addColorStop(0, attack.color + 'ff');
+            gradient.addColorStop(1, attack.color + '00');
+            
+            ctx.beginPath();
+            ctx.arc(tailX, tailY, 10, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+    }
+}
         
