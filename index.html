@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Military Map - Ракеты и бомбы</title>
+    <meta name="description" content="2D карта с ракетами, бомбами и анимациями">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <!-- КАНВАС -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- ИНТЕРФЕЙС -->
+    <div id="ui">
+        <!-- ЗАГОЛОВОК -->
+        <div class="header">
+            <h1>🚀 MILITARY MAP SIMULATOR</h1>
+            <p>Выбери страну и цель, запускай ракеты!</p>
+        </div>
+        
+        <!-- ВЫБОР СТРАНЫ -->
+        <div class="panel country-panel">
+            <h3>🎯 ТВОЯ СТРАНА</h3>
+            <div class="country-list">
+                <button class="country-btn active" data-country="RU">
+                    <span class="flag">🇷🇺</span>
+                    <span class="name">Россия</span>
+                    <span class="capital">Москва</span>
+                </button>
+                <button class="country-btn" data-country="US">
+                    <span class="flag">🇺🇸</span>
+                    <span class="name">США</span>
+                    <span class="capital">Вашингтон</span>
+                </button>
+                <button class="country-btn" data-country="CN">
+                    <span class="flag">🇨🇳</span>
+                    <span class="name">Китай</span>
+                    <span class="capital">Пекин</span>
+                </button>
+                <button class="country-btn" data-country="KZ">
+                    <span class="flag">🇰🇿</span>
+                    <span class="name">Казахстан</span>
+                    <span class="capital">Астана</span>
+                </button>
+                <button class="country-btn" data-country="DE">
+                    <span class="flag">🇩🇪</span>
+                    <span class="name">Германия</span>
+                    <span class="capital">Берлин</span>
+                </button>
+                <button class="country-btn" data-country="JP">
+                    <span class="flag">🇯🇵</span>
+                    <span class="name">Япония</span>
+                    <span class="capital">Токио</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- ОРУЖИЕ -->
+        <div class="panel weapon-panel">
+            <h3>💣 ВЫБЕРИ ОРУЖИЕ</h3>
+            <div class="weapon-list">
+                <button class="weapon-btn" data-weapon="tank">
+                    <span class="icon">🚜</span>
+                    <span class="name">Танки</span>
+                    <span class="price">$50K</span>
+                </button>
+                <button class="weapon-btn" data-weapon="artillery">
+                    <span class="icon">💣</span>
+                    <span class="name">Артиллерия</span>
+                    <span class="price">$100K</span>
+                </button>
+                <button class="weapon-btn" data-weapon="plane">
+                    <span class="icon">✈️</span>
+                    <span class="name">Самолеты</span>
+                    <span class="price">$200K</span>
+                </button>
+                <button class="weapon-btn" data-weapon="missile">
+                    <span class="icon">🚀</span>
+                    <span class="name">Ракеты</span>
+                    <span class="price">$500K</span>
+                </button>
+                <button class="weapon-btn" data-weapon="nuke">
+                    <span class="icon">☢️</span>
+                    <span class="name">Ядерная</span>
+                    <span class="price">$1M</span>
+                </button>
+                <button class="weapon-btn tsar" data-weapon="tsar">
+                    <span class="icon">👑💣</span>
+                    <span class="name">ЦАРЬ-БОМБА</span>
+                    <span class="price">$5M</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- СТАТИСТИКА -->
+        <div class="panel stats-panel">
+            <h3>📊 СТАТИСТИКА</h3>
+            <div class="stats">
+                <div class="stat">
+                    <span>Очки:</span>
+                    <span id="score">1,000,000</span>
+                </div>
+                <div class="stat">
+                    <span>Запусков:</span>
+                    <span id="launches">0</span>
+                </div>
+                <div class="stat">
+                    <span>Попаданий:</span>
+                    <span id="hits">0</span>
+                </div>
+                <div class="stat">
+                    <span>Точность:</span>
+                    <span id="accuracy">0%</span>
+                </div>
+            </div>
+            
+            <div class="current-target">
+                <div>🎯 Цель: <span id="targetName">Не выбрана</span></div>
+                <div>📍 Координаты: <span id="targetCoords">0°, 0°</span></div>
+            </div>
+        </div>
+        
+        <!-- КНОПКА ЗАПУСКА -->
+        <button id="launchBtn" class="launch-btn">
+            🚀 ЗАПУСТИТЬ РАКЕТУ
+        </button>
+        
+        <!-- ИНФОРМАЦИЯ О ЦЕЛИ -->
+        <div id="targetInfo" class="target-info">
+            <div class="target-name" id="currentTarget">Кликни по карте</div>
+            <div class="target-coords" id="currentCoords">0°, 0°</div>
+        </div>
+        
+        <!-- ЛОГ СОБЫТИЙ -->
+        <div class="panel log-panel">
+            <h3>📡 ЛОГ АТАК</h3>
+            <div id="eventLog" class="log"></div>
+        </div>
+    </div>
+    
+    <!-- ЯДЕРНОЕ ПРЕДУПРЕЖДЕНИЕ -->
+    <div id="nukeAlert" class="nuke-alert">
+        <div class="nuke-content">
+            <div class="nuke-icon">☢️</div>
+            <div class="nuke-text">ЯДЕРНАЯ ТРЕВОГА!</div>
+            <div class="nuke-subtext">ЦАРЬ-БОМБА АКТИВИРОВАНА</div>
+            <div class="countdown" id="nukeCountdown">10</div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="game.js"></script>
+</body>
+                      </html>
