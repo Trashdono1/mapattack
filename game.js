@@ -655,3 +655,10 @@ function goBackToCountrySelect() {
 
 // ========== ЗАПУСК ==========
 
+// Инициализируем при загрузке страницы
+window.onload = init;
+
+// Предотвращаем контекстное меню на мобильных
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
