@@ -1261,3 +1261,112 @@ function showTargetMarker(x, y) {
     ctx.fillStyle = '#ff0000';
     ctx.fill();
 }
+
+ // ========== UI И СТАТИСТИКА ==========
+
+function updateStats() {
+    document.getElementById('statLaunches').textContent = stats.launches;
+    document.getElementById('statHits').textContent = stats.hits;
+    document.getElementById('statDestroyed').textContent = stats.destroyed;
+    document.getElementById('statSpent').textContent = '$' + stats.spent.toLocaleString();
+    document.getElementById('statIntercepts').textContent = stats.intercepts;
+    document.getElementById('moneyAmount').textContent = stats.money.toLocaleString();
+    
+    // Точность
+    const accuracy = stats.launches > 0 ? Math.round((stats.hits / stats.launches) * 100) : 0;
+    document.getElementById('statAccuracy').textContent = accuracy + '%';
+}
+
+function updateEnemiesDisplay() {
+    const container = document.getElementById('enemiesContainer');
+    container.innerHTML = '';
+    
+    enemies.forEach(enemy => {
+        const enemyEl = document.createElement('div');
+        enemyEl.className = 'enemy-item';
+        enemyEl.innerHTML = `
+            <span>${enemy.flag} ${enemy.name}</span>
+            <span style="color: ${enemy.destroyed ? '#ff0000' : '#00ff88'}">
+                ${enemy.destroyed ? '💀 УНИЧТОЖЕНА' : enemy.health + '%'}
+            </span>
+        `;
+        container.appendChild(enemyEl);
+    });
+}
+
+function addLog(message) {
+    const log = document.getElementById('eventLog');
+    const logMobile = document.getElementById('eventLogMobile');
+    
+    const time = new Date();
+    const timeStr = `${time.getHours().toString().padStart(2, '0')}:` +
+                   `${time.getMinutes().toString().padStart(2, '0')}:` +
+                   `${time.getSeconds().toString().padStart(2, '0')}`;
+    
+    const entry = `<div class="log-entry">[${timeStr}] ${message}</div>`;
+    
+    if (log) {
+        log.innerHTML = entry + log.innerHTML;
+        if (log.children.length > 10) {
+            log.removeChild(log.lastChild);
+        }
+        log.scrollTop = 0;
+    }
+    
+    if (logMobile) {
+        logMobile.innerHTML = `<div>[${timeStr}] ${message}</div>` + logMobile.innerHTML;
+        if (logMobile.children.length > 5) {
+            logMobile.removeChild(logMobile.lastChild);
+        }
+    }
+}
+
+function goBackToCountrySelect() {
+    if (confirm('Вернуться к выбору страны? Текущий прогресс не сохранится.')) {
+        // Останавливаем игру
+        isGameRunning = false;
+        
+        // Сбрасываем состояние
+        attacks = [];
+        explosions = [];
+        trails = [];
+        craters = [];
+        selectedTarget = null;
+        stats = { 
+            launches: 0, 
+            hits: 0, 
+            destroyed: 0, 
+            money: 1000000, 
+            spent: 0,
+            intercepts: 0,
+            citiesDestroyed: 0
+        };
+        updateStats();
+        
+        // Переключаем экраны
+        document.getElementById('gameScreen').classList.remove('active');
+        document.getElementById('countrySelectScreen').classList.add('active');
+        
+        addLog('🔄 Возврат к выбору страны');
+    }
+}
+
+// ========== ЗАПУСК ==========
+
+// Инициализируем при загрузке страницы
+window.onload = init;
+
+// Предотвращаем контекстное меню
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+// Закрытие панели количества при клике вне ее
+document.addEventListener('click', function(e) {
+    const quantityPanel = document.getElementById('quantityPanel');
+    if (quantityPanel && quantityPanel.classList.contains('active') && 
+        !quantityPanel.contains(e.target) && 
+        !e.target.closest('.control-btn')) {
+        closeQuantityPanel();
+    }
+});
