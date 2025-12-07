@@ -1,4 +1,4 @@
-/* ОСНОВНЫЕ СТИЛИ */
+/* БАЗОВЫЕ СТИЛИ */
 * {
     margin: 0;
     padding: 0;
@@ -8,9 +8,103 @@
 body {
     background: #000;
     color: #fff;
-    font-family: 'Roboto Mono', monospace;
+    font-family: Arial, sans-serif;
     overflow: hidden;
     height: 100vh;
+    touch-action: manipulation;
+}
+
+/* ЭКРАНЫ */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.screen.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ЭКРАН ВЫБОРА СТРАНЫ */
+.select-container {
+    background: rgba(10, 20, 40, 0.95);
+    padding: 30px;
+    border-radius: 20px;
+    border: 3px solid #00a8ff;
+    text-align: center;
+    max-width: 800px;
+    width: 95%;
+    box-shadow: 0 0 40px rgba(0, 168, 255, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.select-container h1 {
+    font-size: clamp(24px, 5vw, 42px);
+    color: #00a8ff;
+    margin-bottom: 10px;
+}
+
+.select-container p {
+    color: #aaa;
+    font-size: clamp(14px, 3vw, 18px);
+    margin-bottom: 30px;
+}
+
+.countries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.country-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.country-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #00a8ff;
+    transform: scale(1.05);
+}
+
+.country-card .flag {
+    font-size: clamp(40px, 10vw, 70px);
+    margin-bottom: 10px;
+}
+
+.country-card .name {
+    font-size: clamp(14px, 3vw, 18px);
+    font-weight: bold;
+}
+
+.start-btn {
+    background: linear-gradient(145deg, #ff3333, #ff6666);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 15px;
+    font-size: clamp(16px, 4vw, 24px);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
 }
 
 /* КАНВАС */
@@ -26,223 +120,213 @@ canvas {
     z-index: 1;
 }
 
-/* ИНТЕРФЕЙС */
-#ui {
+/* ВЕРХНЯЯ ПАНЕЛЬ */
+.top-bar {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-#ui > * {
-    pointer-events: auto;
-}
-
-/* ЗАГОЛОВОК */
-.header {
-    position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 10px;
+    left: 10px;
+    right: 10px;
     background: rgba(0, 20, 40, 0.95);
-    padding: 20px 30px;
+    padding: 12px 20px;
     border-radius: 15px;
-    border: 3px solid #00a8ff;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 30px rgba(0, 168, 255, 0.5);
-}
-
-.header h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 28px;
-    color: #00a8ff;
-    margin-bottom: 5px;
-}
-
-.header p {
-    color: #aaa;
-    font-size: 14px;
-}
-
-/* ПАНЕЛИ */
-.panel {
-    background: rgba(20, 30, 60, 0.95);
-    border-radius: 15px;
-    border: 2px solid;
-    padding: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.panel h3 {
-    color: inherit;
-    margin-bottom: 15px;
-    font-family: 'Orbitron', sans-serif;
-    text-align: center;
-}
-
-/* ПАНЕЛЬ СТРАН */
-.country-panel {
-    position: fixed;
-    top: 120px;
-    left: 20px;
-    width: 300px;
-    border-color: #ff3333;
-}
-
-.country-panel h3 {
-    color: #ff3333;
-}
-
-.country-list {
+    border: 2px solid #00a8ff;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.country-btn {
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid #555;
-    border-radius: 10px;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: left;
-}
-
-.country-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateX(5px);
-}
-
-.country-btn.active {
-    background: rgba(255, 50, 50, 0.3);
-    border-color: #ff3333;
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-}
-
-.flag {
-    font-size: 28px;
-    min-width: 40px;
-}
-
-.name {
-    flex: 1;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.capital {
-    color: #aaa;
-    font-size: 12px;
-}
-
-/* ПАНЕЛЬ ОРУЖИЯ */
-.weapon-panel {
-    position: fixed;
-    top: 120px;
-    right: 20px;
-    width: 300px;
-    border-color: #ffaa00;
-}
-
-.weapon-panel h3 {
-    color: #ffaa00;
-}
-
-.weapon-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
-.weapon-btn {
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(14px, 3vw, 18px);
+    font-weight: bold;
+}
+
+.player-info span:first-child {
+    font-size: clamp(20px, 5vw, 28px);
+}
+
+.money-info {
+    font-size: clamp(14px, 3vw, 18px);
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.money-info span:first-child {
+    color: #aaa;
+    margin-right: 5px;
+}
+
+.target-info {
+    font-size: clamp(12px, 2.5vw, 16px);
+}
+
+.target-info span:first-child {
+    color: #aaa;
+    margin-right: 5px;
+}
+
+/* ЛЕВАЯ ПАНЕЛЬ - ПК ВЕРСИЯ */
+.pc-only {
+    display: block;
+}
+
+.mobile-only {
+    display: none;
+}
+
+.left-panel {
+    position: fixed;
+    top: 80px;
+    left: 10px;
+    width: 200px;
+    background: rgba(20, 30, 60, 0.95);
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #ffaa00;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+}
+
+.left-panel h3 {
+    color: #ffaa00;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.weapons-pc {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.weapon-btn-pc {
+    display: flex;
     align-items: center;
-    padding: 15px;
+    gap: 10px;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid #555;
-    border-radius: 10px;
+    border-radius: 8px;
     color: white;
     cursor: pointer;
     transition: all 0.3s;
-    text-align: center;
+    font-size: 12px;
 }
 
-.weapon-btn:hover {
+.weapon-btn-pc:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-5px);
 }
 
-.weapon-btn.active {
+.weapon-btn-pc.active {
     background: rgba(255, 170, 0, 0.3);
     border-color: #ffaa00;
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.5);
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
 }
 
-.weapon-btn.tsar {
-    grid-column: span 2;
+.weapon-btn-pc.tsar {
     background: rgba(255, 0, 0, 0.2);
     border-color: #ff0000;
     animation: tsarPulse 2s infinite;
 }
 
 @keyframes tsarPulse {
-    0%, 100% { box-shadow: 0 0 10px #ff0000; }
-    50% { box-shadow: 0 0 25px #ff0000; }
+    0%, 100% { box-shadow: 0 0 5px #ff0000; }
+    50% { box-shadow: 0 0 15px #ff0000; }
 }
 
-.icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+.attack-info {
+    background: rgba(255, 170, 0, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ffaa00;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 12px;
 }
 
-.weapon-btn .name {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.weapon-btn .price {
+.attack-info span {
     color: #00ff88;
+    font-weight: bold;
+}
+
+.attack-btn-pc {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(145deg, #ff3333, #ff6666);
+    color: white;
+    border: none;
+    border-radius: 8px;
     font-size: 14px;
     font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
 }
 
-/* ПАНЕЛЬ СТАТИСТИКИ */
-.stats-panel {
+.attack-btn-pc:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.back-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00a8ff;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.back-btn:hover {
+    background: rgba(0, 168, 255, 0.2);
+}
+
+/* ПРАВАЯ ПАНЕЛЬ - ПК */
+.right-panel {
     position: fixed;
-    bottom: 90px;
-    left: 20px;
-    width: 300px;
-    border-color: #00ff88;
+    top: 80px;
+    right: 10px;
+    width: 200px;
+    background: rgba(20, 30, 60, 0.95);
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #00ff88;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
 }
 
-.stats-panel h3 {
+.right-panel h3 {
     color: #00ff88;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 16px;
 }
 
-.stats {
+.stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 15px;
 }
 
 .stat {
     background: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    border-radius: 8px;
+    padding: 8px;
+    border-radius: 6px;
     display: flex;
     justify-content: space-between;
+    font-size: 11px;
 }
 
 .stat span:first-child {
@@ -254,188 +338,254 @@ canvas {
     font-weight: bold;
 }
 
-.current-target {
+.coordinates {
     background: rgba(255, 0, 0, 0.1);
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
     border: 1px solid #ff3333;
+    text-align: center;
+    font-size: 12px;
 }
 
-.current-target div {
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-/* КНОПКА ЗАПУСКА */
-.launch-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(145deg, #ff3333, #ff6666);
-    color: white;
-    border: none;
-    padding: 20px 40px;
-    border-radius: 15px;
-    font-size: 20px;
-    font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
-    cursor: pointer;
-    transition: all 0.3s;
-    z-index: 1001;
-    box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
-}
-
-.launch-btn:hover {
-    transform: translateX(-50%) scale(1.05);
-    box-shadow: 0 0 40px rgba(255, 0, 0, 0.7);
-}
-
-.launch-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: translateX(-50%) scale(1);
-}
-
-/* ИНФОРМАЦИЯ О ЦЕЛИ */
-.target-info {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 15px;
-    border-radius: 10px;
-    border: 2px solid #ff3333;
-    display: none;
-}
-
-.target-name {
-    color: #ff3333;
-    font-size: 18px;
-    font-weight: bold;
+.coordinates div:first-child {
+    color: #aaa;
     margin-bottom: 5px;
 }
 
-.target-coords {
+.coordinates div:last-child {
     color: #00ff88;
     font-family: 'Courier New', monospace;
-    font-size: 14px;
 }
 
-/* ЛОГ СОБЫТИЙ */
+/* ЛОГ СОБЫТИЙ - ПК */
 .log-panel {
     position: fixed;
-    bottom: 90px;
-    right: 20px;
-    width: 350px;
-    height: 250px;
-    border-color: #aa00ff;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #aa00ff;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
 }
 
 .log-panel h3 {
     color: #aa00ff;
+    margin-bottom: 10px;
+    font-size: 16px;
 }
 
-.log {
-    height: 180px;
+#eventLog {
+    height: 70px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .log-entry {
-    padding: 8px;
+    padding: 5px;
     border-bottom: 1px solid #333;
     color: #ff9999;
 }
 
-.log-time {
-    color: #aaa;
-    font-size: 11px;
-    margin-right: 10px;
-}
-
-/* ЯДЕРНОЕ ПРЕДУПРЕЖДЕНИЕ */
-.nuke-alert {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(139, 0, 0, 0.95);
-    z-index: 9999;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    animation: nukeFlash 0.5s infinite;
-}
-
-@keyframes nukeFlash {
-    0%, 100% { background: rgba(139, 0, 0, 0.95); }
-    50% { background: rgba(255, 0, 0, 0.95); }
-}
-
-.nuke-content {
-    text-align: center;
-}
-
-.nuke-icon {
-    font-size: 120px;
-    margin-bottom: 20px;
-    animation: nukePulse 1s infinite;
-}
-
-@keyframes nukePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-.nuke-text {
-    font-size: 60px;
-    color: white;
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-shadow: 0 0 20px white;
-}
-
-.nuke-subtext {
-    font-size: 24px;
-    color: #ffd700;
-    margin-bottom: 30px;
-}
-
-.countdown {
-    font-size: 80px;
-    color: white;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: bold;
-    text-shadow: 0 0 30px white;
-    animation: countdownPulse 1s infinite;
-}
-
-@keyframes countdownPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-/* АДАПТИВНОСТЬ */
-@media (max-width: 1200px) {
-    .country-panel,
-    .weapon-panel,
-    .stats-panel {
-        position: static;
-        width: 100%;
-        margin: 10px;
+/* МОБИЛЬНАЯ ВЕРСИЯ */
+@media (max-width: 768px) {
+    .pc-only {
+        display: none !important;
     }
     
-    .header {
-        position: static;
-        margin: 10px;
+    .mobile-only {
+        display: block !important;
+    }
+    
+    .top-bar {
+        padding: 10px 15px;
+        flex-direction: column;
+        gap: 8px;
         text-align: center;
+        top: 5px;
     }
     
-    .launch-btn {
+    /* МОБИЛЬНАЯ ПАНЕЛЬ ОРУЖИЯ */
+    .weapons-panel {
         position: fixed;
         bottom: 10px;
+        left: 10px;
+        right: 10px;
+        height: 60px;
+        background: rgba(20, 30, 60, 0.98);
+        border-radius: 15px;
+        border: 2px solid #ffaa00;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 1001;
+        backdrop-filter: blur(20px);
+    }
+    
+    .hamburger-menu {
+        font-size: 28px;
+        cursor: pointer;
+        color: #ffaa00;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .current-weapon-mobile {
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .attack-btn-mobile-small {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(145deg, #ff3333, #ff6666);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* ВЫПАДАЮЩЕЕ МЕНЮ ОРУЖИЯ */
+    .mobile-weapons {
+        position: fixed;
+        bottom: 80px;
+        left: 10px;
+        right: 10px;
+        background: rgba(20, 30, 60, 0.98);
+        border: 2px solid #ffaa00;
+        border-radius: 15px;
+        padding: 20px;
+        z-index: 1002;
+        backdrop-filter: blur(20px);
+        display: none;
+    }
+    
+    .mobile-weapons.active {
+        display: block;
+        animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .weapons-grid-mobile {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .weapon-btn-mobile {
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid #555;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .weapon-btn-mobile:active {
+        background: rgba(255, 170, 0, 0.3);
+        transform: scale(0.95);
+    }
+    
+    .weapon-btn-mobile .icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .weapon-btn-mobile div {
+        font-size: 12px;
+    }
+    
+    .weapon-btn-mobile.tsar {
+        background: rgba(255, 0, 0, 0.2);
+        border-color: #ff0000;
+    }
+    
+    .attack-btn-mobile {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(145deg, #ff3333, #ff6666);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    /* ЛОГ СОБЫТИЙ ДЛЯ МОБИЛЬНЫХ */
+    .log-panel-mobile {
+        position: fixed;
+        top: 90px;
+        left: 10px;
+        right: 10px;
+        max-height: 100px;
+        background: rgba(0, 0, 0, 0.9);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #aa00ff;
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    #eventLogMobile {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+    }
+    
+    #eventLogMobile div {
+        padding: 5px;
+        border-bottom: 1px solid #333;
+        color: #ff9999;
     }
 }
+
+/* ДЕСКТОП ВЕРСИЯ */
+@media (min-width: 769px) {
+    .top-bar {
+        flex-direction: row;
+        padding: 15px 25px;
+    }
+    
+    .left-panel {
+        width: 220px;
+        top: 100px;
+        left: 20px;
+    }
+    
+    .right-panel {
+        width: 220px;
+        top: 100px;
+        right: 20px;
+    }
+    
+    .log-panel {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        height: 150px;
+    }
+    }
