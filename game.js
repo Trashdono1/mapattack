@@ -1,361 +1,252 @@
-// ========== КОНСТАНТЫ И КОНФИГУРАЦИЯ ==========
-
-// Координаты основных стран
-const COUNTRIES = {
-    'RU': { name: 'Россия', capital: 'Москва', lat: 55.7558, lon: 37.6173, color: '#ff0000' },
-    'US': { name: 'США', capital: 'Вашингтон', lat: 38.9072, lon: -77.0369, color: '#0000ff' },
-    'CN': { name: 'Китай', capital: 'Пекин', lat: 39.9042, lon: 116.4074, color: '#ff9900' },
-    'KZ': { name: 'Казахстан', capital: 'Астана', lat: 51.1694, lon: 71.4491, color: '#00ff00' },
-    'DE': { name: 'Германия', capital: 'Берлин', lat: 52.5200, lon: 13.4050, color: '#000000' },
-    'JP': { name: 'Япония', capital: 'Токио', lat: 35.6762, lon: 139.6503, color: '#ff6666' },
-    'IN': { name: 'Индия', capital: 'Дели', lat: 28.6139, lon: 77.2090, color: '#ff66ff' },
-    'FR': { name: 'Франция', capital: 'Париж', lat: 48.8566, lon: 2.3522, color: '#0000ff' },
-    'GB': { name: 'Великобритания', capital: 'Лондон', lat: 51.5074, lon: -0.1278, color: '#ff0000' },
-    'BR': { name: 'Бразилия', capital: 'Бразилиа', lat: -15.8267, lon: -47.9218, color: '#009900' }
-};
-
-// Оружие и его характеристики
-const WEAPONS = {
-    'tank': {
-        name: 'Танки',
-        price: 50000,
-        damage: 20,
-        range: 300,
-        speed: 2,
-        color: '#00ff00',
-        explosionRadius: 20,
-        trailColor: '#00ff00'
-    },
-    'artillery': {
-        name: 'Артиллерия',
-        price: 100000,
-        damage: 40,
-        range: 500,
-        speed: 4,
-        color: '#ff9900',
-        explosionRadius: 30,
-        trailColor: '#ff9900'
-    },
-    'plane': {
-        name: 'Самолеты',
-        price: 200000,
-        damage: 60,
-        range: 800,
-        speed: 6,
-        color: '#ff3333',
-        explosionRadius: 40,
-        trailColor: '#ff3333'
-    },
-    'missile': {
-        name: 'Ракеты',
-        price: 500000,
-        damage: 80,
-        range: 1200,
-        speed: 8,
-        color: '#ff0066',
-        explosionRadius: 50,
-        trailColor: '#ff0066'
-    },
-    'nuke': {
-        name: 'Ядерная бомба',
-        price: 1000000,
-        damage: 95,
-        range: 2000,
-        speed: 10,
-        color: '#ff0000',
-        explosionRadius: 100,
-        trailColor: '#ff0000'
-    },
-    'tsar': {
-        name: 'ЦАРЬ-БОМБА',
-        price: 5000000,
-        damage: 100,
-        range: 3000,
-        speed: 15,
-        color: '#ffd700',
-        explosionRadius: 200,
-        trailColor: '#ffd700'
-    }
-};
-
-// ========== ПЕРЕМЕННЫЕ ИГРЫ ==========
+// ========== ПЕРЕМЕННЫЕ ==========
 
 let canvas, ctx;
-let player = {
-    country: 'RU',
-    score: 1000000,
-    budget: 1000000,
-    selectedWeapon: null,
-    selectedTarget: null
-};
+let selectedCountry = 'RU';
+let selectedWeapon = 'tank';
+let selectedTarget = null;
 
 let attacks = [];
 let explosions = [];
+let isGameRunning = false;
+let isMobileMenuOpen = false;
+
+// Данные
+const COUNTRIES = {
+    'RU': { name: 'Россия', flag: '🇷🇺', lat: 55.7558, lon: 37.6173, color: '#ff0000' },
+    'US': { name: 'США', flag: '🇺🇸', lat: 38.9072, lon: -77.0369, color: '#0000ff' },
+    'CN': { name: 'Китай', flag: '🇨🇳', lat: 39.9042, lon: 116.4074, color: '#ff9900' },
+    'KZ': { name: 'Казахстан', flag: '🇰🇿', lat: 51.1694, lon: 71.4491, color: '#00ff00' },
+    'DE': { name: 'Германия', flag: '🇩🇪', lat: 52.5200, lon: 13.4050, color: '#000000' },
+    'JP': { name: 'Япония', flag: '🇯🇵', lat: 35.6762, lon: 139.6503, color: '#ff6666' }
+};
+
+const WEAPONS = {
+    'tank': { name: 'ТАНКИ', damage: 20, speed: 0.02, color: '#00ff00', radius: 30 },
+    'artillery': { name: 'АРТИЛЛЕРИЯ', damage: 40, speed: 0.03, color: '#ff9900', radius: 40 },
+    'plane': { name: 'САМОЛЕТЫ', damage: 60, speed: 0.04, color: '#ff3333', radius: 50 },
+    'missile': { name: 'РАКЕТЫ', damage: 80, speed: 0.05, color: '#ff0066', radius: 60 },
+    'nuke': { name: 'ЯДЕРНАЯ', damage: 95, speed: 0.06, color: '#ff0000', radius: 100 },
+    'tsar': { name: 'ЦАРЬ-БОМБА', damage: 100, speed: 0.08, color: '#ffd700', radius: 200 }
+};
+
 let stats = {
     launches: 0,
     hits: 0,
-    accuracy: 0
+    destroyed: 0
 };
-
-let isTsarActivated = false;
-let animationId = null;
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 function init() {
-    console.log('🚀 Инициализация Military Map...');
+    console.log('🚀 Инициализация игры...');
     
-    // Получаем canvas и контекст
+    // Настройка выбора страны
+    setupCountrySelection();
+    
+    // Ждем пока пользователь выберет страну
+    // Игра начнется после нажатия "Начать"
+}
+
+function setupCountrySelection() {
+    const countryCards = document.querySelectorAll('.country-card');
+    countryCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const country = this.getAttribute('data-country');
+            selectCountry(country);
+        });
+    });
+}
+
+function selectCountry(countryCode) {
+    selectedCountry = countryCode;
+    
+    // Снимаем выделение со всех
+    document.querySelectorAll('.country-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Выделяем выбранную
+    document.querySelector(`[data-country="${countryCode}"]`).classList.add('selected');
+    
+    // Обновляем отображение
+    document.getElementById('playerFlag').textContent = COUNTRIES[countryCode].flag;
+    document.getElementById('playerName').textContent = COUNTRIES[countryCode].name;
+    
+    console.log(`✅ Выбрана страна: ${COUNTRIES[countryCode].name}`);
+}
+
+// ========== ЗАПУСК ИГРЫ ==========
+
+function startGame() {
+    if (!selectedCountry) {
+        alert('Сначала выбери страну!');
+        return;
+    }
+    
+    // Переключаем экраны
+    document.getElementById('countrySelectScreen').classList.remove('active');
+    document.getElementById('gameScreen').classList.add('active');
+    
+    // Инициализируем Canvas
+    initCanvas();
+    
+    // Настраиваем обработчики
+    setupGameControls();
+    
+    // Запускаем игровой цикл
+    isGameRunning = true;
+    gameLoop();
+    
+    // Логируем
+    addLog(`🎮 Игра началась! Вы играете за ${COUNTRIES[selectedCountry].name}`);
+    addLog('🎯 Кликни на карту чтобы выбрать цель');
+}
+
+function initCanvas() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
-    // Устанавливаем размеры canvas
+    // Устанавливаем размеры
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // Настройка обработчиков событий
-    setupEventListeners();
-    
-    // Выбираем страну по умолчанию
-    selectCountry('RU');
-    
-    // Выбираем оружие по умолчанию
-    selectWeapon('missile');
-    
-    // Запускаем игровой цикл
-    gameLoop();
-    
-    console.log('✅ Игра инициализирована!');
+    // Обработка кликов по карте
+    canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('touchstart', handleTouch, { passive: false });
 }
 
-// Изменение размера canvas
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
-// Настройка обработчиков событий
-function setupEventListeners() {
-    // Клик по canvas для выбора цели
-    canvas.addEventListener('click', handleCanvasClick);
-    
-    // Движение мыши по canvas
-    canvas.addEventListener('mousemove', handleMouseMove);
-    
-    // Кнопка запуска
-    document.getElementById('launchBtn').addEventListener('click', launchAttack);
-    
-    // Выбор страны
-    document.querySelectorAll('.country-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const country = btn.getAttribute('data-country');
-            selectCountry(country);
-        });
-    });
-    
-    // Выбор оружия
-    document.querySelectorAll('.weapon-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const weapon = btn.getAttribute('data-weapon');
+// ========== УПРАВЛЕНИЕ ==========
+
+function setupGameControls() {
+    // ПК: кнопки оружия
+    document.querySelectorAll('.weapon-btn-pc').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const weapon = this.getAttribute('data-weapon');
             selectWeapon(weapon);
         });
     });
     
-    // Обработка клавиатуры
-    document.addEventListener('keydown', handleKeyDown);
-}
-
-// ========== ВЫБОР СТРАНЫ И ОРУЖИЯ ==========
-
-function selectCountry(countryCode) {
-    player.country = countryCode;
-    
-    // Снимаем выделение со всех стран
-    document.querySelectorAll('.country-btn').forEach(btn => {
-        btn.classList.remove('active');
+    // Мобильные: кнопки оружия
+    document.querySelectorAll('.weapon-btn-mobile').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const weapon = this.getAttribute('data-weapon');
+            selectWeapon(weapon);
+            toggleMobileMenu(); // Закрываем меню после выбора
+        });
     });
     
-    // Выделяем выбранную страну
-    document.querySelector(`[data-country="${countryCode}"]`).classList.add('active');
-    
-    addToLog(`Выбрана страна: ${COUNTRIES[countryCode].name}`);
+    // Кнопка атаки уже настроена в HTML через onclick
 }
 
 function selectWeapon(weaponType) {
-    player.selectedWeapon = weaponType;
+    selectedWeapon = weaponType;
     const weapon = WEAPONS[weaponType];
     
-    // Снимаем выделение со всего оружия
-    document.querySelectorAll('.weapon-btn').forEach(btn => {
+    // Обновляем отображение
+    document.getElementById('selectedWeaponName').textContent = weapon.name;
+    document.getElementById('selectedWeaponDamage').textContent = weapon.damage + '%';
+    document.getElementById('mobileWeaponName').textContent = weapon.name;
+    
+    // Снимаем выделение со всех кнопок
+    document.querySelectorAll('.weapon-btn-pc, .weapon-btn-mobile').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Выделяем выбранное оружие
-    document.querySelector(`[data-weapon="${weaponType}"]`).classList.add('active');
+    // Выделяем выбранную
+    document.querySelectorAll(`[data-weapon="${weaponType}"]`).forEach(btn => {
+        btn.classList.add('active');
+    });
     
-    addToLog(`Выбрано оружие: ${weapon.name}`);
-    
-    // Обновляем бюджет если недостаточно средств
-    updateBudgetDisplay();
+    addLog(`💣 Выбрано оружие: ${weapon.name}`);
 }
 
-// ========== ОБРАБОТКА ВВОДА ==========
+function selectWeaponMobile(weaponType) {
+    selectWeapon(weaponType);
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileWeapons');
+    isMobileMenuOpen = !isMobileMenuOpen;
+    
+    if (isMobileMenuOpen) {
+        menu.classList.add('active');
+    } else {
+        menu.classList.remove('active');
+    }
+}
 
 function handleCanvasClick(event) {
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    // Преобразуем координаты в широту/долготу
+    selectTarget(x, y);
+}
+
+function handleTouch(event) {
+    event.preventDefault();
+    
+    if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        selectTarget(x, y);
+        
+        // Закрываем меню оружия если оно открыто
+        if (isMobileMenuOpen) {
+            toggleMobileMenu();
+        }
+    }
+}
+
+function selectTarget(x, y) {
+    selectedTarget = { x, y };
+    
+    // Конвертируем в координаты
     const coords = screenToLatLon(x, y);
     
-    // Ищем ближайшую страну
+    // Находим ближайшую страну
     const nearestCountry = findNearestCountry(coords.lat, coords.lon);
     
+    // Обновляем UI
     if (nearestCountry) {
-        player.selectedTarget = {
-            x: x,
-            y: y,
-            country: nearestCountry.code,
-            name: nearestCountry.name,
-            lat: coords.lat,
-            lon: coords.lon
-        };
-        
-        // Показываем информацию о цели
-        showTargetInfo(nearestCountry.name, coords.lat, coords.lon);
-        
-        addToLog(`Выбрана цель: ${nearestCountry.name}`);
+        document.getElementById('targetName').textContent = nearestCountry.name;
+        document.getElementById('targetCountry').textContent = nearestCountry.name;
+        addLog(`🎯 Цель выбрана: ${nearestCountry.name}`);
     } else {
-        player.selectedTarget = {
-            x: x,
-            y: y,
-            country: null,
-            name: 'Океан',
-            lat: coords.lat,
-            lon: coords.lon
-        };
-        
-        showTargetInfo('Океан', coords.lat, coords.lon);
-        addToLog(`Выбрана цель: точка в океане`);
-    }
-}
-
-function handleMouseMove(event) {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Показываем координаты при наведении
-    const coords = screenToLatLon(x, y);
-    updateCoordsDisplay(coords.lat, coords.lon);
-}
-
-function handleKeyDown(event) {
-    switch(event.key) {
-        case ' ':
-        case 'Spacebar':
-            launchAttack();
-            break;
-        case '1':
-            selectWeapon('tank');
-            break;
-        case '2':
-            selectWeapon('artillery');
-            break;
-        case '3':
-            selectWeapon('plane');
-            break;
-        case '4':
-            selectWeapon('missile');
-            break;
-        case '5':
-            selectWeapon('nuke');
-            break;
-        case '6':
-            selectWeapon('tsar');
-            break;
-    }
-}
-
-// ========== ЗАПУСК АТАКИ ==========
-
-function launchAttack() {
-    if (!player.selectedWeapon || !player.selectedTarget) {
-        addToLog('⚠️ Сначала выбери оружие и цель!');
-        return;
+        document.getElementById('targetName').textContent = 'Точка на карте';
+        document.getElementById('targetCountry').textContent = 'Океан';
+        addLog('🎯 Цель выбрана: точка в океане');
     }
     
-    const weapon = WEAPONS[player.selectedWeapon];
+    document.getElementById('targetCoords').textContent = 
+        `${coords.lat.toFixed(1)}°, ${coords.lon.toFixed(1)}°`;
     
-    // Проверка бюджета
-    if (player.budget < weapon.price) {
-        addToLog('❌ Недостаточно средств!');
-        return;
-    }
-    
-    // Получаем координаты своей страны
-    const playerCountry = COUNTRIES[player.country];
-    const startPos = latLonToScreen(playerCountry.lat, playerCountry.lon);
-    
-    // Создаем атаку
-    const attack = {
-        id: Date.now(),
-        weapon: player.selectedWeapon,
-        startX: startPos.x,
-        startY: startPos.y,
-        targetX: player.selectedTarget.x,
-        targetY: player.selectedTarget.y,
-        progress: 0,
-        speed: weapon.speed / 100,
-        color: weapon.color,
-        trailColor: weapon.trailColor,
-        explosionRadius: weapon.explosionRadius,
-        damage: weapon.damage,
-        targetCountry: player.selectedTarget.country,
-        targetName: player.selectedTarget.name,
-        completed: false
-    };
-    
-    attacks.push(attack);
-    
-    // Списание средств
-    player.budget -= weapon.price;
-    player.score += weapon.damage * 100;
-    
-    // Обновление статистики
-    stats.launches++;
-    updateStats();
-    
-    // Обновление бюджета
-    updateBudgetDisplay();
-    
-    // Добавление в лог
-    addToLog(`🚀 Запущена ${weapon.name} → ${player.selectedTarget.name}`);
-    
-    // Особый случай для Царь-бомбы
-    if (player.selectedWeapon === 'tsar') {
-        activateTsarBomba();
-    }
+    // Показываем метку на карте (визуально)
+    showTargetMarker(x, y);
 }
 
 // ========== ГЕОКООРДИНАТЫ ==========
 
-// Преобразование экранных координат в широту/долготу
 function screenToLatLon(x, y) {
     const lon = (x / canvas.width) * 360 - 180;
     const lat = 90 - (y / canvas.height) * 180;
     return { lat, lon };
 }
 
-// Преобразование широты/долготы в экранные координаты
 function latLonToScreen(lat, lon) {
     const x = (lon + 180) * (canvas.width / 360);
     const y = (90 - lat) * (canvas.height / 180);
     return { x, y };
 }
 
-// Поиск ближайшей страны к координатам
 function findNearestCountry(lat, lon) {
     let nearest = null;
     let minDistance = Infinity;
@@ -366,163 +257,70 @@ function findNearestCountry(lat, lon) {
             Math.pow(country.lon - lon, 2)
         );
         
-        if (distance < minDistance) {
+        if (distance < minDistance && distance < 10) {
             minDistance = distance;
             nearest = { code, ...country };
         }
     }
     
-    // Если слишком далеко от любой страны
-    if (minDistance > 10) {
-        return null;
-    }
-    
     return nearest;
 }
 
-// ========== ОТОБРАЖЕНИЕ ИНФОРМАЦИИ ==========
+// ========== АТАКА ==========
 
-function showTargetInfo(name, lat, lon) {
-    const targetInfo = document.getElementById('targetInfo');
-    document.getElementById('currentTarget').textContent = name;
-    document.getElementById('currentCoords').textContent = 
-        `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
-    
-    targetInfo.style.display = 'block';
-    targetInfo.style.left = (event.clientX + 20) + 'px';
-    targetInfo.style.top = (event.clientY - targetInfo.offsetHeight / 2) + 'px';
-    
-    // Прячем через 3 секунды
-    setTimeout(() => {
-        targetInfo.style.display = 'none';
-    }, 3000);
-}
-
-function updateCoordsDisplay(lat, lon) {
-    const coordsElement = document.getElementById('targetCoords');
-    if (coordsElement) {
-        coordsElement.textContent = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
-    }
-}
-
-function updateBudgetDisplay() {
-    const weapon = player.selectedWeapon ? WEAPONS[player.selectedWeapon] : null;
-    const launchBtn = document.getElementById('launchBtn');
-    
-    if (weapon && player.budget >= weapon.price) {
-        launchBtn.disabled = false;
-        launchBtn.innerHTML = `🚀 ЗАПУСТИТЬ ${weapon.name.toUpperCase()} ($${weapon.price.toLocaleString()})`;
-    } else if (weapon) {
-        launchBtn.disabled = true;
-        launchBtn.innerHTML = `❌ НЕДОСТАТОЧНО СРЕДСТВ ($${weapon.price.toLocaleString()})`;
+function launchAttack() {
+    if (!selectedTarget) {
+        addLog('⚠️ Сначала выбери цель на карте!');
+        return;
     }
     
-    // Обновление счета
-    document.getElementById('score').textContent = player.score.toLocaleString();
-}
-
-function updateStats() {
-    document.getElementById('launches').textContent = stats.launches;
-    document.getElementById('hits').textContent = stats.hits;
-    
-    if (stats.launches > 0) {
-        stats.accuracy = Math.round((stats.hits / stats.launches) * 100);
-        document.getElementById('accuracy').textContent = `${stats.accuracy}%`;
-    }
-}
-
-function addToLog(message) {
-    const log = document.getElementById('eventLog');
-    const entry = document.createElement('div');
-    entry.className = 'log-entry';
-    
-    const time = new Date();
-    const timeStr = `${time.getHours().toString().padStart(2, '0')}:` +
-                   `${time.getMinutes().toString().padStart(2, '0')}:` +
-                   `${time.getSeconds().toString().padStart(2, '0')}`;
-    
-    entry.innerHTML = `<span class="log-time">[${timeStr}]</span> ${message}`;
-    
-    log.prepend(entry);
-    
-    // Ограничиваем количество записей
-    if (log.children.length > 20) {
-        log.removeChild(log.lastChild);
+    if (!selectedWeapon) {
+        addLog('⚠️ Сначала выбери оружие!');
+        return;
     }
     
-    // Автопрокрутка
-    log.scrollTop = 0;
-}
-
-// ========== ЦАРЬ-БОМБА ==========
-
-function activateTsarBomba() {
-    isTsarActivated = true;
+    const weapon = WEAPONS[selectedWeapon];
+    const country = COUNTRIES[selectedCountry];
     
-    // Показываем предупреждение
-    const alert = document.getElementById('nukeAlert');
-    alert.style.display = 'flex';
+    // Получаем стартовую позицию (столица страны)
+    const startPos = latLonToScreen(country.lat, country.lon);
     
-    // Запускаем обратный отсчет
-    let countdown = 10;
-    const countdownElement = document.getElementById('nukeCountdown');
-    
-    const countdownInterval = setInterval(() => {
-        countdown--;
-        countdownElement.textContent = countdown;
-        
-        if (countdown <= 0) {
-            clearInterval(countdownInterval);
-            triggerTsarBomba();
-            
-            // Скрываем предупреждение через 5 секунд
-            setTimeout(() => {
-                alert.style.display = 'none';
-                isTsarActivated = false;
-            }, 5000);
-        }
-    }, 1000);
-}
-
-function triggerTsarBomba() {
-    // Создаем огромный взрыв
-    const explosion = {
-        x: player.selectedTarget.x,
-        y: player.selectedTarget.y,
-        radius: 0,
-        maxRadius: 200,
-        color: '#ffd700',
-        opacity: 1,
-        duration: 5,
-        startTime: Date.now(),
-        shockwave: true
+    // Создаем атаку
+    const attack = {
+        id: Date.now(),
+        startX: startPos.x,
+        startY: startPos.y,
+        targetX: selectedTarget.x,
+        targetY: selectedTarget.y,
+        progress: 0,
+        speed: weapon.speed,
+        color: weapon.color,
+        radius: weapon.radius,
+        damage: weapon.damage,
+        completed: false
     };
     
-    explosions.push(explosion);
+    attacks.push(attack);
     
-    // Добавляем урон всем странам
-    for (const [code, country] of Object.entries(COUNTRIES)) {
-        const pos = latLonToScreen(country.lat, country.lon);
-        const distance = Math.sqrt(
-            Math.pow(pos.x - explosion.x, 2) + 
-            Math.pow(pos.y - explosion.y, 2)
-        );
-        
-        if (distance < 500) { // Большой радиус поражения
-            addToLog(`💥 ${country.name} пострадала от ядерного взрыва!`);
-        }
+    // Обновляем статистику
+    stats.launches++;
+    updateStats();
+    
+    // Логируем
+    const targetName = document.getElementById('targetName').textContent;
+    addLog(`🚀 Запущена ${weapon.name} → ${targetName}`);
+    
+    // Особый эффект для Царь-бомбы
+    if (selectedWeapon === 'tsar') {
+        createTsarBombaEffect(selectedTarget.x, selectedTarget.y);
     }
-    
-    // Большой бонус очков
-    player.score += 1000000;
-    updateBudgetDisplay();
-    
-    addToLog('☢️ ЦАРЬ-БОМБА УНИЧТОЖИЛА ВСЁ В РАДИУСЕ 500КМ!');
 }
 
-// ========== ИГРОВОЙ ЦИКЛ ==========
+// ========== ГРАФИКА И АНИМАЦИЯ ==========
 
 function gameLoop() {
+    if (!isGameRunning) return;
+    
     // Очищаем canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -544,22 +342,12 @@ function gameLoop() {
     drawCountries();
     
     // Следующий кадр
-    animationId = requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
 }
-
-// ========== ОТРИСОВКА ==========
 
 function drawBackground() {
     // Градиентный фон
-    const gradient = ctx.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
-        0,
-        canvas.width / 2,
-        canvas.height / 2,
-        Math.max(canvas.width, canvas.height) / 2
-    );
-    
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#000814');
     gradient.addColorStop(1, '#001d3d');
     
@@ -568,10 +356,11 @@ function drawBackground() {
     
     // Сетка
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 1;
     
     // Вертикальные линии
-    for (let x = 0; x < canvas.width; x += 50) {
+    const gridSize = 50;
+    for (let x = 0; x < canvas.width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
@@ -579,7 +368,7 @@ function drawBackground() {
     }
     
     // Горизонтальные линии
-    for (let y = 0; y < canvas.height; y += 50) {
+    for (let y = 0; y < canvas.height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
@@ -588,7 +377,6 @@ function drawBackground() {
     
     // Экватор
     ctx.strokeStyle = 'rgba(0, 168, 255, 0.3)';
-    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, canvas.height / 2);
     ctx.lineTo(canvas.width, canvas.height / 2);
@@ -602,8 +390,8 @@ function drawBackground() {
 }
 
 function drawMap() {
-    // Здесь можно добавить контуры стран
-    // Пока просто оставляем пустым
+    // Здесь можно добавить контуры континентов
+    // Пока оставляем пустым для простоты
 }
 
 function drawCountries() {
@@ -612,110 +400,133 @@ function drawCountries() {
         
         // Точка страны
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+        ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
         ctx.fillStyle = country.color;
         ctx.fill();
+        
+        // Обводка
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Подпись (иногда, чтобы не загромождать)
-        if (Math.random() > 0.5) {
+        // Подпись (только на ПК)
+        if (window.innerWidth > 768) {
             ctx.fillStyle = '#fff';
-            ctx.font = '10px Arial';
+            ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(country.capital, pos.x, pos.y - 12);
+            ctx.fillText(country.name, pos.x, pos.y - 15);
         }
     }
 }
 
-// ========== АТАКИ И РАКЕТЫ ==========
-
-     function updateAttacks() {
-      for (let i = attacks.length - 1; i >= 0; i--) {
+function updateAttacks() {
+    for (let i = attacks.length - 1; i >= 0; i--) {
         const attack = attacks[i];
         
         // Увеличиваем прогресс
         attack.progress += attack.speed;
         
-        // Если ракета достигла цели
+        // Если достигли цели
         if (attack.progress >= 1) {
             attack.completed = true;
             
             // Создаем взрыв
-            const explosion = {
-                x: attack.targetX,
-                y: attack.targetY,
-                radius: 0,
-                maxRadius: attack.explosionRadius,
-                color: attack.color,
-                opacity: 1,
-                duration: attack.weapon === 'tsar' ? 5 : 2,
-                startTime: Date.now(),
-                shockwave: attack.weapon === 'tsar'
-            };
-            
-            explosions.push(explosion);
+            createExplosion(attack.targetX, attack.targetY, attack.radius, attack.color);
             
             // Обновляем статистику
             stats.hits++;
+            if (attack.damage >= 80) stats.destroyed++;
             updateStats();
             
             // Удаляем завершенную атаку
             attacks.splice(i, 1);
             
-            // Добавляем в лог
-            addToLog(`💥 ${WEAPONS[attack.weapon].name} попала в ${attack.targetName}!`);
+            // Логируем
+            addLog(`💥 ${WEAPONS[selectedWeapon].name} попала в цель!`);
         }
     }
 }
 
 function drawAttacks() {
     for (const attack of attacks) {
-        // Вычисляем текущую позицию ракеты
+        // Текущая позиция ракеты
         const currentX = attack.startX + (attack.targetX - attack.startX) * attack.progress;
         const currentY = attack.startY + (attack.targetY - attack.startY) * attack.progress;
         
-        // Рисуем линию траектории (след ракеты)
+        // Линия траектории
         ctx.beginPath();
         ctx.moveTo(attack.startX, attack.startY);
         ctx.lineTo(currentX, currentY);
-        ctx.strokeStyle = attack.trailColor + '80'; // 50% прозрачность
+        ctx.strokeStyle = attack.color + '80';
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Рисуем саму ракету
+        // Ракета
         ctx.beginPath();
         ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
         ctx.fillStyle = attack.color;
         ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
         
-        // Эффект огня сзади ракеты
-        if (attack.progress > 0.1) {
-            const tailLength = 20;
-            const tailX = currentX - (attack.targetX - attack.startX) * 0.05;
-            const tailY = currentY - (attack.targetY - attack.startY) * 0.05;
-            
-            const gradient = ctx.createRadialGradient(
-                tailX, tailY, 0,
-                tailX, tailY, 10
-            );
-            gradient.addColorStop(0, attack.color + 'ff');
-            gradient.addColorStop(1, attack.color + '00');
-            
-            ctx.beginPath();
-            ctx.arc(tailX, tailY, 10, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
-            ctx.fill();
-        }
+        // Хвост огня
+        const tailLength = 15;
+        const tailX = currentX - (attack.targetX - attack.startX) * 0.05;
+        const tailY = currentY - (attack.targetY - attack.startY) * 0.05;
+        
+        const gradient = ctx.createRadialGradient(
+            tailX, tailY, 0,
+            tailX, tailY, 8
+        );
+        gradient.addColorStop(0, attack.color + 'ff');
+        gradient.addColorStop(1, attack.color + '00');
+        
+        ctx.beginPath();
+        ctx.arc(tailX, tailY, 8, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
     }
 }
-        
 
-  // ========== ВЗРЫВЫ ==========
+function createExplosion(x, y, radius, color) {
+    explosions.push({
+        x, y,
+        radius: 0,
+        maxRadius: radius,
+        color: color,
+        opacity: 1,
+        duration: 2,
+        startTime: Date.now()
+    });
+}
+
+function createTsarBombaEffect(x, y) {
+    // Большой взрыв
+    explosions.push({
+        x, y,
+        radius: 0,
+        maxRadius: 300,
+        color: '#ffd700',
+        opacity: 1,
+        duration: 5,
+        startTime: Date.now(),
+        isTsar: true
+    });
+    
+    // Ударная волна
+    setTimeout(() => {
+        explosions.push({
+            x, y,
+            radius: 0,
+            maxRadius: 500,
+            color: '#ffffff',
+            opacity: 0.5,
+            duration: 3,
+            startTime: Date.now(),
+            isShockwave: true
+        });
+    }, 1000);
+    
+    addLog('☢️ ЦАРЬ-БОМБА АКТИВИРОВАНА!');
+}
 
 function updateExplosions() {
     const now = Date.now();
@@ -737,59 +548,110 @@ function updateExplosions() {
 
 function drawExplosions() {
     for (const explosion of explosions) {
-        // Основной взрыв
         const gradient = ctx.createRadialGradient(
             explosion.x, explosion.y, 0,
             explosion.x, explosion.y, explosion.radius
         );
         
-        if (explosion.shockwave) {
-            // Ядерный взрыв
+        if (explosion.isTsar) {
             gradient.addColorStop(0, 'rgba(255, 255, 0, ' + explosion.opacity * 0.8 + ')');
             gradient.addColorStop(0.5, 'rgba(255, 100, 0, ' + explosion.opacity * 0.6 + ')');
             gradient.addColorStop(1, 'rgba(255, 0, 0, ' + explosion.opacity * 0.2 + ')');
+        } else if (explosion.isShockwave) {
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.3 + ')');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         } else {
-            // Обычный взрыв
             gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.8 + ')');
-            gradient.addColorStop(1, 'rgba(255, 0, 0, ' + explosion.opacity * 0.2 + ')');
+            gradient.addColorStop(1, explosion.color.replace(')', ', ' + explosion.opacity * 0.2 + ')'));
         }
         
         ctx.beginPath();
         ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
-        
-        // Ударная волна (для ядерного взрыва)
-        if (explosion.shockwave) {
-            const shockwaveRadius = explosion.radius * 1.5;
-            const shockwaveOpacity = explosion.opacity * 0.5;
-            
-            ctx.beginPath();
-            ctx.arc(explosion.x, explosion.y, shockwaveRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, ' + shockwaveOpacity + ')';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        }
-        
-        // Вспышка в центре
-        ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + explosion.opacity + ')';
-        ctx.fill();
     }
 }
 
-// ========== ЗАПУСК ИГРЫ ==========
+function showTargetMarker(x, y) {
+    // Временная метка цели (исчезает через 2 секунды)
+    const marker = {
+        x, y,
+        radius: 5,
+        opacity: 1,
+        startTime: Date.now()
+    };
+    
+    // Рисуем метку
+    ctx.beginPath();
+    ctx.arc(x, y, 15, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff0000';
+    ctx.fill();
+}
 
-// Запускаем игру когда страница загружена
-window.addEventListener('load', init);
+// ========== UI И ЛОГИРОВАНИЕ ==========
 
-// Останавливаем анимацию при закрытии
-window.addEventListener('beforeunload', () => {
-    if (animationId) {
-        cancelAnimationFrame(animationId);
+function updateStats() {
+    document.getElementById('statLaunches').textContent = stats.launches;
+    document.getElementById('statHits').textContent = stats.hits;
+    document.getElementById('statDestroyed').textContent = stats.destroyed;
+    
+    // Точность
+    const accuracy = stats.launches > 0 ? Math.round((stats.hits / stats.launches) * 100) : 0;
+    document.getElementById('statAccuracy').textContent = accuracy + '%';
+}
+
+function addLog(message) {
+    const log = document.getElementById('eventLog');
+    const logMobile = document.getElementById('eventLogMobile');
+    
+    const time = new Date();
+    const timeStr = `${time.getHours().toString().padStart(2, '0')}:` +
+                   `${time.getMinutes().toString().padStart(2, '0')}:` +
+                   `${time.getSeconds().toString().padStart(2, '0')}`;
+    
+    const entry = `<div class="log-entry">[${timeStr}] ${message}</div>`;
+    
+    if (log) {
+        log.innerHTML = entry + log.innerHTML;
+        if (log.children.length > 10) {
+            log.removeChild(log.lastChild);
+        }
+        log.scrollTop = 0;
     }
-});
+    
+    if (logMobile) {
+        logMobile.innerHTML = `<div>${message}</div>` + logMobile.innerHTML;
+        if (logMobile.children.length > 5) {
+            logMobile.removeChild(logMobile.lastChild);
+        }
+    }
+}
 
-console.log('🚀 Military Map загружен! Выбирай страну и цель!');
-                    
+function goBackToCountrySelect() {
+    if (confirm('Вернуться к выбору страны? Текущий прогресс не сохранится.')) {
+        // Останавливаем игру
+        isGameRunning = false;
+        
+        // Сбрасываем состояние
+        attacks = [];
+        explosions = [];
+        selectedTarget = null;
+        stats = { launches: 0, hits: 0, destroyed: 0 };
+        updateStats();
+        
+        // Переключаем экраны
+        document.getElementById('gameScreen').classList.remove('active');
+        document.getElementById('countrySelectScreen').classList.add('active');
+        
+        addLog('🔄 Возврат к выбору страны');
+    }
+}
+
+// ========== ЗАПУСК ==========
+
