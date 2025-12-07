@@ -1260,4 +1260,4 @@ function showTargetMarker(x, y) {
     ctx.arc(x, y, 5, 0, Math.PI * 2);
     ctx.fillStyle = '#ff0000';
     ctx.fill();
-                   }
+}
