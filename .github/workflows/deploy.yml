@@ -1,0 +1,80 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Запускать при каждом пуше в ветку main
+  push:
+    branches: [ "main" ]
+  # Или вручную из вкладки Actions
+  workflow_dispatch:
+
+# Разрешения для деплоя
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Защита от одновременного деплоя
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout код
+        uses: actions/checkout@v4
+        
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Проверить файлы
+        run: |
+          echo "📁 Содержимое репозитория:"
+          ls -la
+          echo ""
+          echo "📄 Проверка index.html:"
+          if [ -f "index.html" ]; then
+            echo "✅ index.html найден"
+          else
+            echo "❌ index.html не найден!"
+            exit 1
+          fi
+          
+      - name: Создать минимальный package.json
+        run: |
+          cat > package.json << EOF
+          {
+            "name": "mapattack",
+            "version": "1.0.0",
+            "description": "Military Map Attack Game",
+            "main": "index.html",
+            "scripts": {
+              "start": "echo 'Open index.html in browser'"
+            },
+            "keywords": ["game", "military", "map"],
+            "author": "Trashdono1",
+            "license": "MIT"
+          }
+          EOF
+          
+      - name: Загрузить артефакты
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Деплой на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
