@@ -676,4 +676,532 @@ function createInterceptionExplosion(x, y, color) {
 
 // ========== ГЕОКООРДИНАТЫ ==========
 
- 
+function screenToLatLon(x, y) {
+    const lon = (x / canvas.width) * 360 - 180;
+    const lat = 90 - (y / canvas.height) * 180;
+    return { lat, lon };
+}
+
+function latLonToScreen(lat, lon) {
+    const x = (lon + 180) * (canvas.width / 360);
+    const y = (90 - lat) * (canvas.height / 180);
+    return { x, y };
+}
+
+function findNearestCountry(lat, lon) {
+    let nearest = null;
+    let minDistance = Infinity;
+    
+    for (const [code, country] of Object.entries(COUNTRIES)) {
+        const distance = Math.sqrt(
+            Math.pow(country.lat - lat, 2) + 
+            Math.pow(country.lon - lon, 2)
+        );
+        
+        if (distance < minDistance && distance < 15) {
+            minDistance = distance;
+            nearest = { code, ...country };
+        }
+    }
+    
+    return nearest;
+}
+
+// ========== ГРАФИКА И АНИМАЦИЯ ==========
+
+function gameLoop() {
+    if (!isGameRunning) return;
+    
+    // Очищаем canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Рисуем карту
+    drawMap();
+    
+    // Обновляем системы защиты
+    updatePVOSystems();
+    
+    // Обновляем и рисуем атаки
+    updateAttacks();
+    drawAttacks();
+    
+    // Рисуем траектории
+    drawTrails();
+    
+    // Рисуем взрывы
+    updateExplosions();
+    drawExplosions();
+    
+    // Рисуем кратеры
+    drawCraters();
+    
+    // Рисуем страны
+    drawCountries();
+    
+    // Рисуем системы защиты
+    drawDefenseSystems();
+    
+    // Следующий кадр
+    requestAnimationFrame(gameLoop);
+}
+
+function drawMap() {
+    // Текстура океана
+    ctx.fillStyle = '#001133';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Сетка координат
+    ctx.strokeStyle = 'rgba(0, 100, 255, 0.1)';
+    ctx.lineWidth = 0.5;
+    
+    // Вертикальные линии (меридианы)
+    for (let lon = -180; lon <= 180; lon += 30) {
+        const x = ((lon + 180) / 360) * canvas.width;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    
+    // Горизонтальные линии (параллели)
+    for (let lat = -90; lat <= 90; lat += 30) {
+        const y = ((90 - lat) / 180) * canvas.height;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+    
+    // Экватор
+    ctx.strokeStyle = 'rgba(0, 200, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.stroke();
+    
+    // Нулевой меридиан
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+}
+
+function drawCountries() {
+    for (const [code, country] of Object.entries(COUNTRIES)) {
+        const pos = latLonToScreen(country.lat, country.lon);
+        
+        // Точка страны
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 12, 0, Math.PI * 2);
+        
+        // Градиент для объема
+        const gradient = ctx.createRadialGradient(
+            pos.x, pos.y, 0,
+            pos.x, pos.y, 20
+        );
+        gradient.addColorStop(0, country.color + 'ff');
+        gradient.addColorStop(1, country.color + '00');
+        
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Основная точка
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = country.color;
+        ctx.fill();
+        
+        // Обводка
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Подпись (только на ПК)
+        if (window.innerWidth > 768) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 3;
+            ctx.fillText(country.name, pos.x, pos.y - 20);
+        }
+    }
+}
+
+function drawDefenseSystems() {
+    // Рисуем радары
+    radars.forEach(radar => {
+        if (!radar.active) return;
+        
+        // Вращающаяся линия радара
+        radar.rotation += 0.02;
+        
+        ctx.beginPath();
+        ctx.arc(radar.x, radar.y, radar.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 200, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Вращающаяся линия
+        const endX = radar.x + Math.cos(radar.rotation) * radar.range;
+        const endY = radar.y + Math.sin(radar.rotation) * radar.range;
+        
+        ctx.beginPath();
+        ctx.moveTo(radar.x, radar.y);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Центр радара
+        ctx.beginPath();
+        ctx.arc(radar.x, radar.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 200, 255, 0.8)';
+        ctx.fill();
+    });
+    
+    // Рисуем системы ПВО
+    pvoSystems.forEach(pvo => {
+        ctx.beginPath();
+        ctx.arc(pvo.x, pvo.y, 15, 0, Math.PI * 2);
+        ctx.fillStyle = pvo.active ? 'rgba(255, 100, 100, 0.8)' : 'rgba(100, 100, 100, 0.5)';
+        ctx.fill();
+        
+        ctx.strokeStyle = pvo.active ? '#ff6464' : '#666';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Крест ПВО
+        ctx.beginPath();
+        ctx.moveTo(pvo.x - 10, pvo.y);
+        ctx.lineTo(pvo.x + 10, pvo.y);
+        ctx.moveTo(pvo.x, pvo.y - 10);
+        ctx.lineTo(pvo.x, pvo.y + 10);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+}
+
+function updateAttacks() {
+    for (let i = attacks.length - 1; i >= 0; i--) {
+        const attack = attacks[i];
+        
+        if (attack.intercepted) {
+            attacks.splice(i, 1);
+            continue;
+        }
+        
+        // Увеличиваем прогресс
+        attack.progress += attack.speed;
+        
+        // Добавляем точку в траекторию
+        const currentX = attack.startX + (attack.targetX - attack.startX) * attack.progress;
+        const currentY = attack.startY + (attack.targetY - attack.startY) * attack.progress;
+        
+        attack.trailPoints.push({
+            x: currentX,
+            y: currentY,
+            time: Date.now()
+        });
+        
+        // Удаляем старые точки (старше 5 секунд)
+        attack.trailPoints = attack.trailPoints.filter(point => 
+            Date.now() - point.time < 5000
+        );
+        
+        // Если достигли цели
+        if (attack.progress >= 1) {
+            attack.completed = true;
+            
+            // Создаем взрыв
+            createExplosion(attack.targetX, attack.targetY, attack);
+            
+            // Создаем кратер
+            createCrater(attack.targetX, attack.targetY, attack.radius);
+            
+            // Обновляем статистику
+            stats.hits++;
+            if (attack.damage >= 80) stats.destroyed++;
+            updateStats();
+            
+            // Удаляем завершенную атаку
+            attacks.splice(i, 1);
+            
+            // Логируем
+            addLog(`💥 ${WEAPONS[attack.weaponType].name} попала в цель!`);
+        }
+    }
+}
+
+function drawAttacks() {
+    for (const attack of attacks) {
+        // Текущая позиция ракеты
+        const currentX = attack.startX + (attack.targetX - attack.startX) * attack.progress;
+        const currentY = attack.startY + (attack.targetY - attack.startY) * attack.progress;
+        
+        // Ракета
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = attack.color;
+        ctx.fill();
+        
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Хвост огня
+        const tailLength = 20;
+        const tailX = currentX - (attack.targetX - attack.startX) * 0.03;
+        const tailY = currentY - (attack.targetY - attack.startY) * 0.03;
+        
+        const gradient = ctx.createRadialGradient(
+            tailX, tailY, 0,
+            tailX, tailY, 12
+        );
+        gradient.addColorStop(0, attack.color + 'ff');
+        gradient.addColorStop(0.5, attack.color + '88');
+        gradient.addColorStop(1, attack.color + '00');
+        
+        ctx.beginPath();
+        ctx.arc(tailX, tailY, 12, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
+}
+
+function drawTrails() {
+    for (const attack of attacks) {
+        if (attack.trailPoints.length < 2) continue;
+        
+        ctx.beginPath();
+        ctx.moveTo(attack.trailPoints[0].x, attack.trailPoints[0].y);
+        
+        // Рисуем траекторию с учетом времени
+        for (let i = 1; i < attack.trailPoints.length; i++) {
+            const point = attack.trailPoints[i];
+            const age = Date.now() - point.time;
+            const opacity = 1 - (age / 5000); // Исчезает за 5 секунд
+            
+            ctx.lineTo(point.x, point.y);
+            ctx.strokeStyle = attack.trailColor.replace(')', `, ${opacity})`);
+            ctx.lineWidth = attack.trailWidth;
+            ctx.stroke();
+            
+            // Начинаем новую линию для следующего сегмента
+            ctx.beginPath();
+            ctx.moveTo(point.x, point.y);
+        }
+    }
+}
+
+function createExplosion(x, y, attack) {
+    const weapon = WEAPONS[attack.weaponType];
+    
+    explosions.push({
+        x, y,
+        radius: 0,
+        maxRadius: attack.radius,
+        color: attack.color,
+        opacity: 1,
+        duration: weapon.explosionType === 'nuclear' ? 3 : 2,
+        startTime: Date.now(),
+        type: weapon.explosionType
+    });
+    
+    // Дополнительные эффекты для разных типов взрывов
+    if (weapon.explosionType === 'nuclear') {
+        // Грибовидное облако
+        setTimeout(() => {
+            explosions.push({
+                x, y,
+                radius: 0,
+                maxRadius: attack.radius * 1.5,
+                color: '#ffffff',
+                opacity: 0.6,
+                duration: 4,
+                startTime: Date.now(),
+                type: 'mushroom'
+            });
+        }, 500);
+    }
+    
+    if (weapon.explosionType === 'tsar') {
+        createTsarBombaEffect(x, y);
+    }
+}
+
+function createTsarBombaEffect(x, y) {
+    // Большой взрыв
+    explosions.push({
+        x, y,
+        radius: 0,
+        maxRadius: 300,
+        color: '#ffd700',
+        opacity: 1,
+        duration: 5,
+        startTime: Date.now(),
+        isTsar: true
+    });
+    
+    // Ударная волна
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            explosions.push({
+                x, y,
+                radius: 0,
+                maxRadius: 400 + i * 100,
+                color: '#ffffff',
+                opacity: 0.4 - i * 0.1,
+                duration: 2,
+                startTime: Date.now(),
+                isShockwave: true
+            });
+        }, i * 300);
+    }
+    
+    addLog('☢️ ЦАРЬ-БОМБА АКТИВИРОВАНА! МИР СДРОГНУЛСЯ!');
+}
+
+function createCrater(x, y, radius) {
+    craters.push({
+        x, y,
+        radius: radius * 0.7,
+        depth: radius * 0.3,
+        color: '#8B4513',
+        createdAt: Date.now()
+    });
+}
+
+function drawCraters() {
+    for (const crater of craters) {
+        // Основной кратер
+        ctx.beginPath();
+        ctx.arc(crater.x, crater.y, crater.radius, 0, Math.PI * 2);
+        
+        const gradient = ctx.createRadialGradient(
+            crater.x, crater.y, 0,
+            crater.x, crater.y, crater.radius
+        );
+        gradient.addColorStop(0, 'rgba(139, 69, 19, 0.9)');
+        gradient.addColorStop(0.7, 'rgba(101, 67, 33, 0.7)');
+        gradient.addColorStop(1, 'rgba(61, 43, 31, 0.5)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Тень внутри кратера
+        ctx.beginPath();
+        ctx.arc(crater.x, crater.y, crater.radius * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fill();
+    }
+}
+
+function updateExplosions() {
+    const now = Date.now();
+    
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        const explosion = explosions[i];
+        const elapsed = (now - explosion.startTime) / 1000;
+        const progress = elapsed / explosion.duration;
+        
+        if (progress >= 1) {
+            explosions.splice(i, 1);
+            continue;
+        }
+        
+        explosion.radius = explosion.maxRadius * progress;
+        explosion.opacity = 1 - progress * progress; // Квадратичное затухание
+    }
+}
+
+function drawExplosions() {
+    for (const explosion of explosions) {
+        const gradient = ctx.createRadialGradient(
+            explosion.x, explosion.y, 0,
+            explosion.x, explosion.y, explosion.radius
+        );
+        
+        if (explosion.isTsar) {
+            gradient.addColorStop(0, 'rgba(255, 255, 0, ' + explosion.opacity * 0.9 + ')');
+            gradient.addColorStop(0.3, 'rgba(255, 100, 0, ' + explosion.opacity * 0.7 + ')');
+            gradient.addColorStop(0.7, 'rgba(255, 0, 0, ' + explosion.opacity * 0.4 + ')');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, ' + explosion.opacity * 0.1 + ')');
+        } else if (explosion.isShockwave) {
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.3 + ')');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        } else if (explosion.type === 'intercept') {
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.8 + ')');
+            gradient.addColorStop(0.5, 'rgba(100, 200, 255, ' + explosion.opacity * 0.6 + ')');
+            gradient.addColorStop(1, explosion.color.replace(')', ', ' + explosion.opacity * 0.2 + ')'));
+        } else if (explosion.type === 'nuclear') {
+            gradient.addColorStop(0, 'rgba(255, 255, 200, ' + explosion.opacity * 0.9 + ')');
+            gradient.addColorStop(0.3, 'rgba(255, 200, 0, ' + explosion.opacity * 0.7 + ')');
+            gradient.addColorStop(0.7, 'rgba(255, 100, 0, ' + explosion.opacity * 0.4 + ')');
+            gradient.addColorStop(1, 'rgba(100, 0, 0, ' + explosion.opacity * 0.2 + ')');
+        } else {
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + explosion.opacity * 0.8 + ')');
+            gradient.addColorStop(0.5, explosion.color.replace(')', ', ' + explosion.opacity * 0.6 + ')'));
+            gradient.addColorStop(1, explosion.color.replace(')', ', ' + explosion.opacity * 0.2 + ')'));
+        }
+        
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Для ядерного взрыва рисуем гриб
+        if (explosion.type === 'nuclear') {
+            const mushroomHeight = explosion.radius * 1.5;
+            const mushroomWidth = explosion.radius * 0.8;
+            
+            ctx.beginPath();
+            ctx.ellipse(
+                explosion.x, 
+                explosion.y - mushroomHeight * 0.7, 
+                mushroomWidth, 
+                mushroomHeight * 0.6, 
+                0, 0, Math.PI * 2
+            );
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + explosion.opacity * 0.5 + ')';
+            ctx.fill();
+        }
+    }
+}
+
+function showTargetMarker(x, y) {
+    // Анимированная метка цели
+    let radius = 5;
+    let growing = true;
+    
+    function animateMarker() {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff0000';
+        ctx.fill();
+        
+        if (growing) {
+            radius += 0.2;
+            if (radius > 15) growing = false;
+        } else {
+            radius -= 0.2;
+            if (radius < 5) growing = true;
+        }
+        
+        requestAnimationFrame(animateMarker);
+    }
+    
+    // Анимация на 2 секунды
+    animateMarker();
+    setTimeout(() => {
+        // Останавливаем анимацию через очистку
+    }, 2000);
+} 
